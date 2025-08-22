@@ -1,0 +1,26 @@
+{
+  "name": "kenpos-react",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A responsive, offline-capable, web-based Point of Sale (POS) system.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "start": "vite",
+    "lint": "echo \"ESLint not configured for static project.\""
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0",
+    "@vitejs/plugin-react": "^4.0.0",
+    "typescript": "^5",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "@types/qrcode": "^1.5.5",
+    "@types/jsbarcode": "^3.11.4"
+  }
+}
