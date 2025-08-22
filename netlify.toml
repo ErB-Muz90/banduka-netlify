@@ -1,5 +1,4 @@
 [build]
-  publish = "."
   command = "echo 'No build needed - static site'"
 
 [[redirects]]
@@ -10,7 +9,6 @@
 [dev]
   command = "npm run dev"
   port = 3000
-  publish = "dist"
 
 [[headers]]
   for = "/*"
