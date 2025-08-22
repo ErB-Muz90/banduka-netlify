@@ -92,8 +92,9 @@ const App = () => {
 
     // --- App State ---
     const [isAppLoading, setIsAppLoading] = useState(true);
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [currentView, setCurrentView] = useState<View>(View.POS);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [toasts, setToasts] = useState<ToastData[]>([]);
     const [updateAvailable, setUpdateAvailable] = useState<ServiceWorkerRegistration | null>(null);
@@ -363,7 +364,7 @@ const App = () => {
     const handleAppUpdate = () => {
         if (updateAvailable && updateAvailable.waiting) {
             updateAvailable.waiting.postMessage({ type: 'SKIP_WAITING' });
-            let refreshing;
+            let refreshing = false;
             navigator.serviceWorker.addEventListener('controllerchange', () => {
                 if (refreshing) return;
                 window.location.reload();
@@ -1705,243 +1706,19 @@ const App = () => {
     
     }, [activeShift, cart, products, showToast]);
     
-    if(isAppLoading) {
+    
+
+    
+
+    if (isAppLoading) {
         return (
-            <div className="flex h-screen w-screen items-center justify-center bg-background dark:bg-dark-background">
-                <div className="flex items-center space-x-2">
-                    <div className="w-8 h-8 rounded-full animate-spin border-4 border-dashed border-primary dark:border-dark-primary border-t-transparent"></div>
-                    <span className="font-semibold text-foreground dark:text-dark-foreground">Loading Banduka POS™...</span>
+            <div className="flex items-center justify-center h-screen bg-background dark:bg-dark-background">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary dark:border-dark-primary mx-auto mb-4"></div>
+                    <p className="text-foreground dark:text-dark-foreground">Loading Banduka POS™...</p>
                 </div>
             </div>
         );
-    }
-
-    const renderView = () => {
-        if (!currentUser) return null; // Should be handled by AuthView
-        const userPermissions = settings.permissions[currentUser.role] || [];
-        
-        if (selectedWorkOrder) {
-            return (
-                <WorkOrderDetailView
-                    workOrder={selectedWorkOrder}
-                    users={users}
-                    settings={settings}
-                    onBack={() => setSelectedWorkOrder(null)}
-                    onUpdate={handleUpdateWorkOrder}
-                    onPushToPOS={handlePushWorkOrderToPOS}
-                />
-            );
-        }
-
-        if (selectedSalesOrder) {
-            return (
-                <SalesOrderDetailView
-                    salesOrder={selectedSalesOrder}
-                    onBack={() => setSelectedSalesOrder(null)}
-                    onCreatePO={handleCreatePOFromSO}
-                    onPushToPOS={handlePushSOToPOS}
-                />
-            );
-        }
-        
-        if (selectedLayaway) {
-            return (
-                <LayawayDetailView
-                    layaway={selectedLayaway}
-                    onBack={() => setSelectedLayaway(null)}
-                    onAddPayment={handleAddLayawayPayment}
-                />
-            );
-        }
-
-        switch (currentView) {
-            case View.POS:
-                return (
-                    <PosView
-                        products={products}
-                        cart={cart}
-                        customers={customers}
-                        selectedCustomerId={selectedCustomerId}
-                        onCustomerChange={setSelectedCustomerId}
-                        addToCart={addToCart}
-                        updateCartItemQuantity={updateCartItemQuantity}
-                        removeFromCart={removeFromCart}
-                        clearCart={clearCart}
-                        completeSale={completeSale}
-                        isOnline={isOnline}
-                        currentUser={currentUser}
-                        settings={settings}
-                        sales={sales}
-                        payouts={payouts}
-                        activeShift={activeShift}
-                        onStartShift={handleStartShift}
-                        onEndShiftRequest={() => setIsEndingShift(true)}
-                        isEndingShift={isEndingShift}
-                        onConfirmEndShift={handleEndShift}
-                        onCancelEndShift={() => setIsEndingShift(false)}
-                        shiftReportToShow={shiftReportToShow}
-                        onCloseShiftReport={() => setShiftReportToShow(null)}
-                        onEmailReceiptRequest={(saleId, customerId) => handleEmailRequest('Receipt', saleId, customerId)}
-                        onWhatsAppReceiptRequest={(saleId, customerId) => setWhatsAppInfo({ mode: 'receipt', documentId: saleId, customerId })}
-                        onHoldRequest={() => setIsHoldModalOpen(true)}
-                        workOrders={workOrders}
-                        originatingWorkOrderId={originatingWorkOrderId}
-                    />
-                );
-            case View.Dashboard:
-                 return <DashboardView sales={sales} products={products} suppliers={suppliers} supplierInvoices={supplierInvoices} />;
-            case View.Inventory:
-                 return <InventoryView products={products} onUpdateProduct={updateProduct} onDeleteProductRequest={setProductToDelete} permissions={userPermissions} onAddProduct={addProduct} onImportProducts={handleImportProducts} onPrintBarcodeRequest={setProductToPrintBarcode} onAddToPORequest={setProductForPO} settings={settings} />;
-            case View.Purchases:
-                return <PurchasesView purchaseOrders={purchaseOrders} suppliers={suppliers} products={products} onReceivePORequest={setPoToReceive} onAddPurchaseOrder={addPurchaseOrder} onAddSupplier={addSupplier} permissions={userPermissions} onSendPO={handleSendPO} onEmailPORequest={(poId, supplierId) => handleEmailRequest('PurchaseOrder', poId, supplierId)} onWhatsAppPORequest={(poId, supplierId) => setWhatsAppInfo({ mode: 'po', documentId: poId, supplierId })} settings={settings} />;
-            case View.AccountsPayable:
-                return invoiceToView ? (
-                     <InvoiceDetailView
-                        invoice={invoiceToView}
-                        supplier={suppliers.find(s => s.id === invoiceToView.supplierId)}
-                        purchaseOrder={purchaseOrders.find(po => po.id === invoiceToView.purchaseOrderId)}
-                        settings={settings}
-                        onBack={() => setInvoiceToView(null)}
-                        onEmailRequest={(docId, supplierId) => handleEmailRequest('SupplierInvoice', docId, supplierId)}
-                    />
-                ) : (
-                    <AccountsPayableView 
-                        invoices={supplierInvoices} 
-                        suppliers={suppliers} 
-                        onRecordPayment={recordSupplierPayment} 
-                        onViewInvoice={setInvoiceToView}
-                    />
-                );
-            case View.TaxReports:
-                 return <TaxReportView sales={sales} supplierInvoices={supplierInvoices} settings={settings} />;
-            case View.PaymentSummary:
-                 return <PaymentSummaryView sales={sales} users={users} />;
-            case View.ShiftReport:
-                return <ShiftReportView shifts={shifts} sales={sales} payouts={payouts} settings={settings} />;
-            case View.SalesHistory:
-                return saleToView ? (
-                    <ReceiptDetailView
-                        sale={saleToView}
-                        settings={settings}
-                        currentUser={currentUser}
-                        onBack={() => setSaleToView(null)}
-                        onEmailReceiptRequest={handleEmailRequest}
-                    />
-                ) : (
-                    <SalesHistoryView
-                        sales={sales}
-                        customers={customers}
-                        users={users}
-                        onViewSaleRequest={setSaleToView}
-                    />
-                );
-            case View.Customers:
-                return <CustomersView customers={customers} sales={sales} onAddCustomer={addCustomer} onUpdateCustomer={updateCustomer} onDeleteCustomer={deleteCustomer} permissions={userPermissions} settings={settings} />;
-            case View.Quotations:
-                 return selectedQuotation ? (
-                    <QuotationDetailView
-                        quotation={selectedQuotation}
-                        settings={settings}
-                        sales={sales}
-                        onBack={() => setSelectedQuotation(null)}
-                        onConvertQuoteToSale={quote => {
-                            convertQuoteToSale(quote);
-                            setSelectedQuotation(null);
-                        }}
-                        onEmailRequest={(type, quoteId, customerId) => handleEmailRequest(type, quoteId, customerId)}
-                        permissions={userPermissions}
-                    />
-                ) : (
-                    <QuotationsView
-                        quotations={quotations}
-                        sales={sales}
-                        onSelectQuotation={setSelectedQuotation}
-                        onCreateQuoteRequest={() => setIsCreateQuoteModalOpen(true)}
-                        permissions={userPermissions}
-                    />
-                );
-            case View.Staff:
-                return <StaffView 
-                    users={users} 
-                    permissions={userPermissions} 
-                    onAddUser={addUser} 
-                    onUpdateUser={updateUser} 
-                    onDeleteUser={deleteUser}
-                    onManagePermissionsRequest={() => { setSettingsModalToShow('users-perms'); setCurrentView(View.Settings); }}
-                />;
-            case View.TimeSheets:
-                return <TimeSheetsView 
-                    timeClockEvents={timeClockEvents}
-                    users={users}
-                    permissions={userPermissions}
-                    onEditRequest={setTimeClockEventToEdit}
-                    onAddRequest={() => setTimeClockEventToEdit({} as TimeClockEvent)}
-                    onDeleteRequest={handleDeleteTimeClockEvent}
-                />;
-            case View.Settings:
-                return <SettingsView 
-                    settings={settings} 
-                    onUpdateSettings={updateSettings} 
-                    users={users} 
-                    auditLogs={auditLogs} 
-                    showToast={showToast} 
-                    onBackup={handleBackup}
-                    onRestoreRequest={() => restoreInputRef.current?.click()}
-                    onFactoryResetRequest={() => setIsFactoryResetModalOpen(true)}
-                    onSyncLogs={handleSyncLogs}
-                    openModalId={settingsModalToShow}
-                    onModalOpened={() => setSettingsModalToShow(null)}
-                    onTestBarcodePrint={() => setProductToPrintBarcode({ id: 'test-001', name: 'Sample Label', sku: 'SKU-TEST', ean: '1234567890128', price: 99.99, category: 'Test', stock: 1, productType: 'Inventory', pricingType: 'inclusive', unitOfMeasure: 'pc(s)', imageUrl: '' })}
-                />;
-            case View.ReturnReceipt:
-                return <ReturnReceiptView sales={sales} activeShift={activeShift} onProcessReturn={handleProcessReturn} onBack={() => setCurrentView(View.POS)} />;
-            case View.Payout:
-                return <PayoutView activeShift={activeShift} onProcessPayout={handleProcessPayout} onBack={() => setCurrentView(View.POS)} />;
-            case View.Layaway:
-                return <NewLayawayView products={products} customers={customers} settings={settings} onAddLayaway={handleAddLayaway} onBack={() => setCurrentView(View.POS)} activeShift={activeShift} />;
-            case View.WorkOrder:
-                return <NewWorkOrderView customers={customers} users={users} settings={settings} onAddWorkOrder={handleAddWorkOrder} onBack={() => setCurrentView(View.POS)} activeShift={activeShift} />;
-            case View.LayawayList:
-                return <LayawayListView layaways={layaways} onSelectLayaway={setSelectedLayaway} />;
-            case View.WorkOrderList:
-                return <WorkOrderListView workOrders={workOrders} users={users} onViewWorkOrder={setSelectedWorkOrder} />;
-            case View.SalesOrder:
-                return <NewSalesOrderView products={products} customers={customers} settings={settings} onAddSalesOrder={handleAddSalesOrder} onBack={() => setCurrentView(View.POS)} activeShift={activeShift} />;
-            case View.SalesOrderList:
-                return <SalesOrderListView salesOrders={salesOrders} onViewSalesOrder={setSelectedSalesOrder} />;
-            case View.HeldReceipts: 
-                return <HeldReceiptsView 
-                    heldReceipts={heldReceipts}
-                    onRecallReceipt={handleRecallReceipt}
-                    onDeleteReceiptRequest={setReceiptToDelete}
-                />;
-            case View.OpenCashDrawer: return null; // Handled by modal
-            default:
-                return <PlaceholderView viewName={currentView} />;
-        }
-    };
-
-    if (!isAuthenticated) {
-        switch (authView) {
-            case 'signup':
-                return <SignUpView onSignUp={handleSignUp} onNavigateToLogin={() => setAuthView('login')} />;
-            case 'forgot_password':
-                return <ForgotPasswordView 
-                    onFindUser={handleFindUserForRecovery}
-                    onResetPassword={handleResetPassword}
-                    onBackToLogin={() => {
-                        setRecoveryUser(null);
-                        setAuthView('login');
-                    }}
-                />;
-            case 'login':
-            default:
-                 return <LoginView 
-                    onLogin={handleLogin} 
-                    onForgotPassword={() => setAuthView('forgot_password')} 
-                    onNavigateToSignUp={() => setAuthView('signup')} 
-                />;
-        }
     }
 
     if (!settings.isSetupComplete && currentUser?.role === 'Admin') {
@@ -1956,8 +1733,47 @@ const App = () => {
         />;
     }
 
+    if (!isAuthenticated) {
+        return (
+            <div className="h-screen bg-background dark:bg-dark-background">
+                <AnimatePresence mode="wait">
+                    {authView === 'login' && (
+                        <AnimatedView key="login">
+                            <LoginView
+                                onLogin={handleLogin}
+                                onSwitchToSignUp={() => setAuthView('signup')}
+                                onSwitchToForgotPassword={() => setAuthView('forgot_password')}
+                                showToast={showToast}
+                            />
+                        </AnimatedView>
+                    )}
+                    {authView === 'signup' && (
+                        <AnimatedView key="signup">
+                            <SignUpView
+                                onSignUp={handleSignUp}
+                                onSwitchToLogin={() => setAuthView('login')}
+                                showToast={showToast}
+                            />
+                        </AnimatedView>
+                    )}
+                    {authView === 'forgot_password' && (
+                        <AnimatedView key="forgot">
+                            <ForgotPasswordView
+                                onFindUser={handleFindUserForRecovery}
+                                onResetPassword={handleResetPassword}
+                                onBackToLogin={() => setAuthView('login')}
+                                recoveryUser={recoveryUser}
+                                showToast={showToast}
+                            />
+                        </AnimatedView>
+                    )}
+                </AnimatePresence>
+            </div>
+        );
+    }
+
     return (
-        <div className="flex h-full bg-background dark:bg-dark-background font-sans">
+        <div className="flex h-screen bg-background dark:bg-dark-background font-sans overflow-hidden">
             <AnimatePresence>
                 {isLocked && currentUser && (
                     <PinLockView
@@ -1967,164 +1783,636 @@ const App = () => {
                     />
                 )}
             </AnimatePresence>
+            
             <input type="file" ref={restoreInputRef} onChange={handleRestore} accept=".json" className="hidden" />
-            {currentUser && (
-                <Sidebar 
-                    currentView={currentView} 
-                    setCurrentView={setCurrentView}
-                    isOpen={isSidebarOpen}
-                    setIsOpen={setIsSidebarOpen}
-                    role={currentUser.role}
-                    permissions={settings.permissions[currentUser.role] || []}
-                />
-            )}
+            
+            {/* Sidebar */}
+            <Sidebar
+                currentView={currentView}
+                onViewChange={setCurrentView}
+                isOpen={isSidebarOpen}
+                onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
+                currentUser={currentUser}
+                activeShift={activeShift}
+                settings={settings}
+                onStartShift={handleStartShift}
+                onEndShift={() => setIsEndingShift(true)}
+                onClockIn={handleClockIn}
+                onClockOut={handleClockOut}
+                activeTimeClockEvent={activeTimeClockEvent}
+                showToast={showToast}
+            />
+
+            {/* Main Content Area */}
             <div className="flex-1 flex flex-col overflow-hidden">
-                {currentUser && (
-                    <Header 
-                        isOnline={isOnline} 
-                        isSyncing={false}
-                        queuedSalesCount={0}
-                        onMenuClick={() => setIsSidebarOpen(true)}
-                        currentUser={currentUser}
-                        onLogout={handleLogout}
-                        products={products}
-                        currentEvent={currentEvent}
-                        settings={settings}
-                        theme={theme}
-                        onToggleTheme={toggleTheme}
-                        onInstallClick={handleInstallClick}
-                        installPromptEvent={installPromptEvent}
-                        activeTimeClockEvent={activeTimeClockEvent}
-                        onClockIn={handleClockIn}
-                        onClockOut={handleClockOut}
+                {/* Header */}
+                <Header
+                    currentView={currentView}
+                    onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+                    onToggleTheme={toggleTheme}
+                    theme={theme}
+                    currentUser={currentUser}
+                    onLogout={handleLogout}
+                    isOnline={isOnline}
+                    currentEvent={currentEvent}
+                    cartItemCount={cart.length}
+                    onInstallApp={installPromptEvent ? handleInstallClick : undefined}
+                    showToast={showToast}
+                />
+
+                {/* View Content */}
+                <div className="flex-1 relative overflow-hidden">
+                    <AnimatePresence mode="wait">
+                        {currentView === View.POS && (
+                            <AnimatedView key="pos">
+                                <PosView
+                                    products={products}
+                                    cart={cart}
+                                    customers={customers}
+                                    selectedCustomerId={selectedCustomerId}
+                                    onAddToCart={addToCart}
+                                    onUpdateCartItemQuantity={updateCartItemQuantity}
+                                    onRemoveFromCart={removeFromCart}
+                                    onClearCart={clearCart}
+                                    onSelectCustomer={setSelectedCustomerId}
+                                    onCompleteSale={completeSale}
+                                    settings={settings}
+                                    showToast={showToast}
+                                    activeShift={activeShift}
+                                    originatingQuoteId={originatingQuoteId}
+                                    originatingSalesOrderId={originatingSalesOrderId}
+                                    originatingWorkOrderId={originatingWorkOrderId}
+                                    onHoldReceipt={() => setIsHoldModalOpen(true)}
+                                />
+                            </AnimatedView>
+                        )}
+                        
+                        {currentView === View.Dashboard && (
+                            <AnimatedView key="dashboard">
+                                <DashboardView
+                                    sales={sales}
+                                    products={products}
+                                    suppliers={suppliers}
+                                    supplierInvoices={supplierInvoices}
+                                    customers={customers}
+                                    shifts={shifts}
+                                    settings={settings}
+                                />
+                            </AnimatedView>
+                        )}
+                        
+                        {currentView === View.Inventory && (
+                            <AnimatedView key="inventory">
+                                <InventoryView
+                                    products={products}
+                                    onAddProduct={addProduct}
+                                    onUpdateProduct={updateProduct}
+                                    onDeleteProduct={setProductToDelete}
+                                    onAddToPO={setProductForPO}
+                                    onPrintBarcode={setProductToPrintBarcode}
+                                    onImportProducts={handleImportProducts}
+                                    showToast={showToast}
+                                    settings={settings}
+                                />
+                            </AnimatedView>
+                        )}
+                        
+                        {currentView === View.Purchases && (
+                            <AnimatedView key="purchases">
+                                <PurchasesView
+                                    purchaseOrders={purchaseOrders}
+                                    suppliers={suppliers}
+                                    products={products}
+                                    onAddPurchaseOrder={addPurchaseOrder}
+                                    onAddSupplier={addSupplier}
+                                    onReceivePO={setPoToReceive}
+                                    onSendPO={handleSendPO}
+                                    showToast={showToast}
+                                    settings={settings}
+                                />
+                            </AnimatedView>
+                        )}
+                        
+                        {currentView === View.AccountsPayable && (
+                            <AnimatedView key="ap">
+                                <AccountsPayableView
+                                    supplierInvoices={supplierInvoices}
+                                    suppliers={suppliers}
+                                    onRecordPayment={recordSupplierPayment}
+                                    onViewInvoice={setInvoiceToView}
+                                    showToast={showToast}
+                                />
+                            </AnimatedView>
+                        )}
+                        
+                        {currentView === View.Customers && (
+                            <AnimatedView key="customers">
+                                <CustomersView
+                                    customers={customers}
+                                    onAddCustomer={addCustomer}
+                                    onUpdateCustomer={updateCustomer}
+                                    onDeleteCustomer={deleteCustomer}
+                                    showToast={showToast}
+                                />
+                            </AnimatedView>
+                        )}
+                        
+                        {currentView === View.SalesHistory && (
+                            <AnimatedView key="sales-history">
+                                <SalesHistoryView
+                                    sales={sales}
+                                    customers={customers}
+                                    onViewSale={setSaleToView}
+                                    onEmailReceipt={(saleId, customerId) => handleEmailRequest('Receipt', saleId, customerId)}
+                                    onWhatsAppReceipt={(customerId, saleId) => setWhatsAppInfo({ mode: 'receipt', customerId, documentId: saleId })}
+                                    settings={settings}
+                                />
+                            </AnimatedView>
+                        )}
+                        
+                        {currentView === View.Quotations && (
+                            <AnimatedView key="quotations">
+                                <QuotationsView
+                                    quotations={quotations}
+                                    customers={customers}
+                                    onCreateQuotation={() => setIsCreateQuoteModalOpen(true)}
+                                    onViewQuotation={setSelectedQuotation}
+                                    onConvertToSale={convertQuoteToSale}
+                                    onEmailQuotation={(quoteId, customerId) => handleEmailRequest('Quotation', quoteId, customerId)}
+                                    settings={settings}
+                                />
+                            </AnimatedView>
+                        )}
+                        
+                        {currentView === View.Staff && (
+                            <AnimatedView key="staff">
+                                <StaffView
+                                    users={users}
+                                    onAddUser={addUser}
+                                    onUpdateUser={updateUser}
+                                    onDeleteUser={deleteUser}
+                                    currentUser={currentUser}
+                                    showToast={showToast}
+                                    settings={settings}
+                                />
+                            </AnimatedView>
+                        )}
+                        
+                        {currentView === View.Settings && (
+                            <AnimatedView key="settings">
+                                <SettingsView
+                                    settings={settings}
+                                    onUpdateSettings={updateSettings}
+                                    onBackup={handleBackup}
+                                    onRestore={() => restoreInputRef.current?.click()}
+                                    onFactoryReset={() => setIsFactoryResetModalOpen(true)}
+                                    onSyncLogs={handleSyncLogs}
+                                    showToast={showToast}
+                                    auditLogs={auditLogs}
+                                    currentUser={currentUser}
+                                />
+                            </AnimatedView>
+                        )}
+                        
+                        {currentView === View.TaxReports && (
+                            <AnimatedView key="tax-reports">
+                                <TaxReportView
+                                    sales={sales}
+                                    settings={settings}
+                                />
+                            </AnimatedView>
+                        )}
+                        
+                        {currentView === View.ShiftReport && (
+                            <AnimatedView key="shift-report">
+                                <ShiftReportView
+                                    shift={shiftReportToShow}
+                                    sales={sales}
+                                    payouts={payouts}
+                                    onClose={() => setShiftReportToShow(null)}
+                                    settings={settings}
+                                />
+                            </AnimatedView>
+                        )}
+                        
+                        {currentView === View.PaymentSummary && (
+                            <AnimatedView key="payment-summary">
+                                <PaymentSummaryView
+                                    sales={sales}
+                                    shifts={shifts}
+                                    settings={settings}
+                                />
+                            </AnimatedView>
+                        )}
+                        
+                        {currentView === View.TimeSheets && (
+                            <AnimatedView key="timesheets">
+                                <TimeSheetsView
+                                    timeClockEvents={timeClockEvents}
+                                    users={users}
+                                    onEditEvent={setTimeClockEventToEdit}
+                                    onDeleteEvent={handleDeleteTimeClockEvent}
+                                    showToast={showToast}
+                                />
+                            </AnimatedView>
+                        )}
+                        
+                        {currentView === View.ReturnReceipt && (
+                            <AnimatedView key="return-receipt">
+                                <ReturnReceiptView
+                                    sales={sales}
+                                    onProcessReturn={handleProcessReturn}
+                                    onCancel={() => setCurrentView(View.POS)}
+                                    showToast={showToast}
+                                />
+                            </AnimatedView>
+                        )}
+                        
+                        {currentView === View.Payout && (
+                            <AnimatedView key="payout">
+                                <PayoutView
+                                    onProcessPayout={handleProcessPayout}
+                                    onCancel={() => setCurrentView(View.POS)}
+                                    showToast={showToast}
+                                />
+                            </AnimatedView>
+                        )}
+                        
+                        {currentView === View.Layaway && (
+                            <AnimatedView key="new-layaway">
+                                <NewLayawayView
+                                    cart={cart}
+                                    customers={customers}
+                                    selectedCustomerId={selectedCustomerId}
+                                    onSelectCustomer={setSelectedCustomerId}
+                                    onAddLayaway={handleAddLayaway}
+                                    onCancel={() => setCurrentView(View.POS)}
+                                    settings={settings}
+                                />
+                            </AnimatedView>
+                        )}
+                        
+                        {currentView === View.LayawayList && (
+                            <AnimatedView key="layaway-list">
+                                <LayawayListView
+                                    layaways={layaways}
+                                    customers={customers}
+                                    onViewLayaway={setSelectedLayaway}
+                                    onNewLayaway={() => setCurrentView(View.Layaway)}
+                                />
+                            </AnimatedView>
+                        )}
+                        
+                        {currentView === View.WorkOrder && (
+                            <AnimatedView key="new-work-order">
+                                <NewWorkOrderView
+                                    customers={customers}
+                                    onAddWorkOrder={handleAddWorkOrder}
+                                    onCancel={() => setCurrentView(View.POS)}
+                                    settings={settings}
+                                />
+                            </AnimatedView>
+                        )}
+                        
+                        {currentView === View.WorkOrderList && (
+                            <AnimatedView key="work-order-list">
+                                <WorkOrderListView
+                                    workOrders={workOrders}
+                                    customers={customers}
+                                    onViewWorkOrder={setSelectedWorkOrder}
+                                    onNewWorkOrder={() => setCurrentView(View.WorkOrder)}
+                                    onPushToPOS={handlePushWorkOrderToPOS}
+                                />
+                            </AnimatedView>
+                        )}
+                        
+                        {currentView === View.SalesOrder && (
+                            <AnimatedView key="new-sales-order">
+                                <NewSalesOrderView
+                                    products={products}
+                                    customers={customers}
+                                    onAddSalesOrder={handleAddSalesOrder}
+                                    onCancel={() => setCurrentView(View.POS)}
+                                    settings={settings}
+                                />
+                            </AnimatedView>
+                        )}
+                        
+                        {currentView === View.SalesOrderList && (
+                            <AnimatedView key="sales-order-list">
+                                <SalesOrderListView
+                                    salesOrders={salesOrders}
+                                    customers={customers}
+                                    onViewSalesOrder={setSelectedSalesOrder}
+                                    onNewSalesOrder={() => setCurrentView(View.SalesOrder)}
+                                    onCreatePO={handleCreatePOFromSO}
+                                    onPushToPOS={handlePushSOToPOS}
+                                />
+                            </AnimatedView>
+                        )}
+                        
+                        {currentView === View.HeldReceipts && (
+                            <AnimatedView key="held-receipts">
+                                <HeldReceiptsView
+                                    heldReceipts={heldReceipts}
+                                    customers={customers}
+                                    onRecallReceipt={handleRecallReceipt}
+                                    onDeleteReceipt={setReceiptToDelete}
+                                />
+                            </AnimatedView>
+                        )}
+                    </AnimatePresence>
+                </div>
+            </div>
+
+            {/* Detail Views as Overlays */}
+            <AnimatePresence>
+                {saleToView && (
+                    <MotionDiv
+                        key="receipt-detail"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+                    >
+                        <ReceiptDetailView
+                            sale={saleToView}
+                            customer={customers.find(c => c.id === saleToView.customerId)}
+                            onClose={() => setSaleToView(null)}
+                            onEmailReceipt={(customerId) => handleEmailRequest('Receipt', saleToView.id, customerId)}
+                            onWhatsAppReceipt={(customerId) => setWhatsAppInfo({ mode: 'receipt', customerId, documentId: saleToView.id })}
+                            settings={settings}
+                        />
+                    </MotionDiv>
+                )}
+                
+                {selectedQuotation && (
+                    <MotionDiv
+                        key="quotation-detail"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+                    >
+                        <QuotationDetailView
+                            quotation={selectedQuotation}
+                            customer={customers.find(c => c.id === selectedQuotation.customerId)}
+                            onClose={() => setSelectedQuotation(null)}
+                            onConvertToSale={() => {
+                                convertQuoteToSale(selectedQuotation);
+                                setSelectedQuotation(null);
+                            }}
+                            onEmailQuotation={(customerId) => handleEmailRequest('Quotation', selectedQuotation.id, customerId)}
+                            settings={settings}
+                        />
+                    </MotionDiv>
+                )}
+                
+                {invoiceToView && (
+                    <MotionDiv
+                        key="invoice-detail"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+                    >
+                        <InvoiceDetailView
+                            invoice={invoiceToView}
+                            supplier={suppliers.find(s => s.id === invoiceToView.supplierId)}
+                            onClose={() => setInvoiceToView(null)}
+                            onRecordPayment={recordSupplierPayment}
+                            showToast={showToast}
+                        />
+                    </MotionDiv>
+                )}
+                
+                {selectedSalesOrder && (
+                    <MotionDiv
+                        key="sales-order-detail"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+                    >
+                        <SalesOrderDetailView
+                            salesOrder={selectedSalesOrder}
+                            customer={customers.find(c => c.id === selectedSalesOrder.customerId)}
+                            onClose={() => setSelectedSalesOrder(null)}
+                            onCreatePO={() => {
+                                handleCreatePOFromSO(selectedSalesOrder);
+                                setSelectedSalesOrder(null);
+                            }}
+                            onPushToPOS={() => {
+                                handlePushSOToPOS(selectedSalesOrder);
+                                setSelectedSalesOrder(null);
+                            }}
+                        />
+                    </MotionDiv>
+                )}
+                
+                {selectedWorkOrder && (
+                    <MotionDiv
+                        key="work-order-detail"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+                    >
+                        <WorkOrderDetailView
+                            workOrder={selectedWorkOrder}
+                            customer={customers.find(c => c.id === selectedWorkOrder.customerId)}
+                            onClose={() => setSelectedWorkOrder(null)}
+                            onUpdateWorkOrder={handleUpdateWorkOrder}
+                            onPushToPOS={() => {
+                                handlePushWorkOrderToPOS(selectedWorkOrder);
+                                setSelectedWorkOrder(null);
+                            }}
+                        />
+                    </MotionDiv>
+                )}
+                
+                {selectedLayaway && (
+                    <MotionDiv
+                        key="layaway-detail"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+                    >
+                        <LayawayDetailView
+                            layaway={selectedLayaway}
+                            customer={customers.find(c => c.id === selectedLayaway.customerId)}
+                            onClose={() => setSelectedLayaway(null)}
+                            onAddPayment={handleAddLayawayPayment}
+                            showToast={showToast}
+                        />
+                    </MotionDiv>
+                )}
+            </AnimatePresence>
+
+            {/* Modals */}
+            <AnimatePresence>
+                {productToDelete && (
+                    <ConfirmationModal
+                        isOpen={true}
+                        title="Delete Product"
+                        message={`Are you sure you want to delete "${productToDelete.name}"? This action cannot be undone.`}
+                        onConfirm={deleteProduct}
+                        onCancel={() => setProductToDelete(null)}
+                        confirmText="Delete"
+                        cancelText="Cancel"
+                        variant="danger"
                     />
                 )}
-                <main className="flex-1 overflow-y-auto bg-background dark:bg-dark-background relative">
-                    <AnimatePresence mode="wait">
-                        <AnimatedView key={currentView + (selectedSalesOrder ? selectedSalesOrder.id : '') + (selectedWorkOrder ? selectedWorkOrder.id : '') + (selectedLayaway ? selectedLayaway.id : '')}>
-                            {renderView()}
-                        </AnimatedView>
-                    </AnimatePresence>
-                </main>
-            </div>
-             {updateAvailable && <UpdateNotification onUpdate={handleAppUpdate} />}
-            <AnimatePresence>
-                {toasts.map(toast => (
-                    <Toast key={toast.id} {...toast} />
-                ))}
+                
+                {poToReceive && (
+                    <ReceivePOModal
+                        purchaseOrder={poToReceive}
+                        products={products}
+                        onReceive={receivePurchaseOrder}
+                        onClose={() => setPoToReceive(null)}
+                        showToast={showToast}
+                    />
+                )}
+                
+                {productForPO && (
+                    <AddToPOModal
+                        product={productForPO}
+                        purchaseOrders={purchaseOrders.filter(po => po.status === 'Draft')}
+                        suppliers={suppliers}
+                        onConfirm={handleConfirmAddToPO}
+                        onClose={() => setProductForPO(null)}
+                    />
+                )}
+                
+                {productToPrintBarcode && (
+                    <BarcodePrintModal
+                        product={productToPrintBarcode}
+                        onClose={() => setProductToPrintBarcode(null)}
+                        settings={settings}
+                    />
+                )}
+                
+                {isCreateQuoteModalOpen && (
+                    <CreateQuotationForm
+                        products={products}
+                        customers={customers}
+                        onCreateQuotation={addQuotation}
+                        onClose={() => setIsCreateQuoteModalOpen(false)}
+                        settings={settings}
+                    />
+                )}
+                
+                {emailInfo && recipientForEmail && (
+                    <EmailModal
+                        documentType={emailInfo.documentType}
+                        documentId={emailInfo.documentId}
+                        recipient={recipientForEmail}
+                        onSendEmail={handleSendEmail}
+                        onClose={() => setEmailInfo(null)}
+                        settings={settings}
+                    />
+                )}
+                
+                {whatsAppInfo && recipientForWhatsApp && (
+                    <WhatsAppModal
+                        mode={whatsAppInfo.mode}
+                        recipients={[recipientForWhatsApp]}
+                        onSendMessage={handleSendWhatsApp}
+                        onClose={() => setWhatsAppInfo(null)}
+                        settings={settings}
+                    />
+                )}
+                
+                {timeClockEventToEdit && (
+                    <TimeClockModal
+                        event={timeClockEventToEdit}
+                        onSave={handleSaveTimeClockEvent}
+                        onClose={() => setTimeClockEventToEdit(null)}
+                    />
+                )}
+                
+                {isEndingShift && activeShift && (
+                    <ConfirmationModal
+                        isOpen={true}
+                        title="End Shift"
+                        message="Please count the cash in the drawer and enter the amount below."
+                        onConfirm={(actualCash) => handleEndShift(parseFloat(actualCash) || 0)}
+                        onCancel={() => setIsEndingShift(false)}
+                        confirmText="End Shift"
+                        cancelText="Cancel"
+                        variant="primary"
+                        requiresInput={true}
+                        inputLabel="Actual Cash in Drawer"
+                        inputType="number"
+                        inputStep="0.01"
+                    />
+                )}
+                
+                {isCashDrawerModalOpen && (
+                    <ConfirmationModal
+                        isOpen={true}
+                        title="Open Cash Drawer"
+                        message="Are you sure you want to open the cash drawer?"
+                        onConfirm={handleOpenCashDrawer}
+                        onCancel={() => {
+                            setIsCashDrawerModalOpen(false);
+                            setCurrentView(viewBeforeModal);
+                        }}
+                        confirmText="Open Drawer"
+                        cancelText="Cancel"
+                        variant="primary"
+                    />
+                )}
+                
+                {isHoldModalOpen && (
+                    <HoldReceiptModal
+                        onHold={handleHoldReceipt}
+                        onClose={() => setIsHoldModalOpen(false)}
+                    />
+                )}
+                
+                {receiptToDelete && (
+                    <ConfirmationModal
+                        isOpen={true}
+                        title="Delete Held Receipt"
+                        message={`Are you sure you want to delete "${receiptToDelete.name}"? This action cannot be undone.`}
+                        onConfirm={handleDeleteHeldReceipt}
+                        onCancel={() => setReceiptToDelete(null)}
+                        confirmText="Delete"
+                        cancelText="Cancel"
+                        variant="danger"
+                    />
+                )}
+                
+                {isFactoryResetModalOpen && (
+                    <ConfirmationModal
+                        isOpen={true}
+                        title="Factory Reset"
+                        message="This will permanently delete ALL data including products, sales, customers, and settings. This action cannot be undone. Are you absolutely sure?"
+                        onConfirm={handleFactoryReset}
+                        onCancel={() => setIsFactoryResetModalOpen(false)}
+                        confirmText="RESET EVERYTHING"
+                        cancelText="Cancel"
+                        variant="danger"
+                    />
+                )}
             </AnimatePresence>
-             {productToDelete && (
-                <ConfirmationModal
-                    title={`Delete ${productToDelete.name}?`}
-                    message="Are you sure you want to permanently delete this product? This action cannot be undone."
-                    onConfirm={deleteProduct}
-                    onClose={() => setProductToDelete(null)}
-                    isDestructive
-                />
-            )}
-            {poToReceive && (
-                <ReceivePOModal 
-                    purchaseOrder={poToReceive} 
-                    supplier={suppliers.find(s => s.id === poToReceive.supplierId)}
-                    products={products}
-                    onConfirm={(receivedItems) => {
-                        receivePurchaseOrder(poToReceive.id, receivedItems);
-                        setPoToReceive(null);
-                    }}
-                    onClose={() => setPoToReceive(null)}
-                />
-            )}
-             {productForPO && (
-                <AddToPOModal 
-                    product={productForPO} 
-                    purchaseOrders={purchaseOrders.filter(po => po.status === 'Draft' || po.status === 'Sent')}
-                    suppliers={suppliers}
-                    onClose={() => setProductForPO(null)}
-                    onConfirm={handleConfirmAddToPO}
-                />
-            )}
-            {productToPrintBarcode && (
-                <BarcodePrintModal 
-                    product={productToPrintBarcode}
-                    onClose={() => setProductToPrintBarcode(null)}
-                />
-            )}
-            {isCreateQuoteModalOpen && (
-                <CreateQuotationForm 
-                    customers={customers}
-                    products={products}
-                    settings={settings}
-                    onCancel={() => setIsCreateQuoteModalOpen(false)}
-                    onSave={addQuotation}
-                />
-            )}
-            {emailInfo && recipientForEmail && (
-                <EmailModal
-                    documentType={emailInfo.documentType}
-                    documentId={emailInfo.documentId}
-                    recipientName={recipientForEmail.name}
-                    defaultEmail={recipientForEmail.email}
-                    onClose={() => setEmailInfo(null)}
-                    onSend={handleSendEmail}
-                />
-            )}
-            {whatsAppInfo && (
-                <WhatsAppModal 
-                    mode={whatsAppInfo.mode}
-                    recipient={recipientForWhatsApp}
-                    customers={customers}
-                    documentId={whatsAppInfo.documentId}
-                    onClose={() => setWhatsAppInfo(null)}
-                    onSend={handleSendWhatsApp}
-                />
-            )}
-             {timeClockEventToEdit && (
-                <TimeClockModal 
-                    event={timeClockEventToEdit}
-                    users={users}
-                    onClose={() => setTimeClockEventToEdit(null)}
-                    onSave={handleSaveTimeClockEvent}
-                />
-            )}
-            {isCashDrawerModalOpen && (
-                 <ConfirmationModal
-                    title="Open Cash Drawer"
-                    message="Are you sure you want to manually open the cash drawer?"
-                    confirmText="Open"
-                    onConfirm={handleOpenCashDrawer}
-                    onClose={() => {
-                        setIsCashDrawerModalOpen(false);
-                        setCurrentView(viewBeforeModal); // go back
-                    }}
-                />
-            )}
-            {isHoldModalOpen && (
-                <HoldReceiptModal
-                    onConfirm={handleHoldReceipt}
-                    onClose={() => setIsHoldModalOpen(false)}
-                />
-            )}
-            {receiptToDelete && (
-                <ConfirmationModal
-                    title={`Delete "${receiptToDelete.name}"?`}
-                    message="Are you sure you want to permanently delete this held receipt? This action cannot be undone."
-                    onConfirm={handleDeleteHeldReceipt}
-                    onClose={() => setReceiptToDelete(null)}
-                    confirmText="Delete"
-                    isDestructive
-                />
-            )}
-            {isFactoryResetModalOpen && (
-                 <ConfirmationModal
-                    title="Confirm Factory Reset"
-                    message="This will permanently delete ALL data, including sales, products, and settings. This action cannot be undone. Please ensure you have a backup."
-                    confirmText="RESET"
-                    onConfirm={() => {
-                        handleFactoryReset();
-                        setIsFactoryResetModalOpen(false);
-                    }}
-                    onClose={() => setIsFactoryResetModalOpen(false)}
-                    isDestructive
+
+            {/* Toast Notifications */}
+            <div className="fixed bottom-4 right-4 z-50 space-y-2">
+                <AnimatePresence>
+                    {toasts.map((toast) => (
+                        <Toast key={toast.id} toast={toast} />
+                    ))}
+                </AnimatePresence>
+            </div>
+
+            {/* Update Notification */}
+            {updateAvailable && (
+                <UpdateNotification
+                    onUpdate={handleAppUpdate}
+                    onDismiss={() => setUpdateAvailable(null)}
                 />
             )}
         </div>

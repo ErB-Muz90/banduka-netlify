@@ -5,26 +5,15 @@ export default defineConfig({
   plugins: [react()],
   build: {
     outDir: 'dist',
+    sourcemap: false,
     rollupOptions: {
-      input: {
-        main: 'index.html'
+      output: {
+        manualChunks: undefined,
       },
-      external: [
-        'react',
-        'react-dom',
-        /^react-dom\//,
-        'recharts',
-        'framer-motion',
-        'qrcode',
-        'jspdf',
-        'html2canvas',
-        'jsbarcode',
-        'next'
-      ]
-    }
+    },
   },
   server: {
     port: 3000,
-    host: true
-  }
+    host: true,
+  },
 });
