@@ -6,11 +6,18 @@ import { ICONS } from '../constants';
 
 interface SidebarProps {
     currentView: View;
-    setCurrentView: (view: View) => void;
+    onViewChange: (view: View) => void;
     isOpen: boolean;
-    setIsOpen: (isOpen: boolean) => void;
-    role: Role;
-    permissions: Permission[];
+    onToggle: () => void;
+    currentUser: any;
+    activeShift: any;
+    settings: any;
+    onStartShift: (startingFloat: number) => void;
+    onEndShift: () => void;
+    onClockIn: () => void;
+    onClockOut: () => void;
+    activeTimeClockEvent: any;
+    showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
 }
 
 interface NavButtonProps {
@@ -118,7 +125,13 @@ const MAIN_NAV_ITEMS: { view: View; label: string; icon: ReactElement; permissio
 ];
 
 
-const SidebarContent = ({ currentView, setCurrentView, permissions }: Omit<SidebarProps, 'isOpen' | 'setIsOpen' | 'role'>) => {
+interface SidebarContentProps {
+    currentView: View;
+    setCurrentView: (view: View) => void;
+    permissions: Permission[];
+}
+
+const SidebarContent = ({ currentView, setCurrentView, permissions }: SidebarContentProps) => {
     
     const [isPosOpen, setIsPosOpen] = useState(true);
 
@@ -170,13 +183,14 @@ const SidebarContent = ({ currentView, setCurrentView, permissions }: Omit<Sideb
 };
 
 
-const Sidebar = ({ currentView, setCurrentView, isOpen, setIsOpen, role, permissions }: SidebarProps) => {
+const Sidebar = ({ currentView, onViewChange, isOpen, onToggle, currentUser, activeShift, settings, onStartShift, onEndShift, onClockIn, onClockOut, activeTimeClockEvent, showToast }: SidebarProps) => {
+    const permissions = currentUser ? settings.permissions[currentUser.role] || [] : [];
     
     return (
         <>
             {/* Desktop Sidebar */}
             <div className="hidden md:block flex-shrink-0">
-                 <SidebarContent currentView={currentView} setCurrentView={setCurrentView} permissions={permissions} />
+                 <SidebarContent currentView={currentView} setCurrentView={onViewChange} permissions={permissions} />
             </div>
             
             {/* Mobile Sidebar */}
@@ -191,7 +205,7 @@ const Sidebar = ({ currentView, setCurrentView, isOpen, setIsOpen, role, permiss
                                 transition: { duration: 0.3 }
                             }}
                             className="fixed inset-0 bg-black bg-opacity-50 z-30"
-                            onClick={() => setIsOpen(false)}
+                            onClick={onToggle}
                         />
                         <motion.div
                              {...{
@@ -202,7 +216,7 @@ const Sidebar = ({ currentView, setCurrentView, isOpen, setIsOpen, role, permiss
                              }}
                              className="fixed top-0 left-0 h-full z-40 w-64"
                         >
-                            <SidebarContent currentView={currentView} setCurrentView={(v) => { setCurrentView(v); setIsOpen(false); }} permissions={permissions} />
+                            <SidebarContent currentView={currentView} setCurrentView={(v: View) => { onViewChange(v); onToggle(); }} permissions={permissions} />
                         </motion.div>
                     </div>
                 )}
