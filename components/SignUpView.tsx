@@ -4,7 +4,8 @@ import { User } from '../types';
 
 interface SignUpViewProps {
     onSignUp: (userData: Omit<User, 'id' | 'role'>) => Promise<boolean>;
-    onNavigateToLogin: () => void;
+    onSwitchToLogin: () => void;
+    showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
 }
 
 const EyeIcon = ({ className = 'h-5 w-5' }: { className?: string }) => (
@@ -20,7 +21,7 @@ const EyeOffIcon = ({ className = 'h-5 w-5' }: { className?: string }) => (
     </svg>
 );
 
-const SignUpView: React.FC<SignUpViewProps> = ({ onSignUp, onNavigateToLogin }) => {
+const SignUpView: React.FC<SignUpViewProps> = ({ onSignUp, onSwitchToLogin, showToast }) => {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -61,16 +62,36 @@ const SignUpView: React.FC<SignUpViewProps> = ({ onSignUp, onNavigateToLogin }) 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
+        
+        if (!name.trim()) {
+            setError('Business name is required.');
+            return;
+        }
+        
+        if (!email.trim()) {
+            setError('Email address is required.');
+            return;
+        }
+        
         if (password !== confirmPassword) {
             setError('Passwords do not match.');
             return;
         }
+        
         if (password.length < 6) {
             setError('Password must be at least 6 characters long.');
             return;
         }
         
-        await onSignUp({ name, email, password });
+        try {
+            const success = await onSignUp({ name: name.trim(), email: email.trim(), password });
+            if (!success) {
+                setError('Failed to create account. Please try again.');
+            }
+        } catch (error) {
+            setError('An error occurred during signup. Please try again.');
+            console.error('Signup error:', error);
+        }
     };
 
     return (
@@ -91,7 +112,7 @@ const SignUpView: React.FC<SignUpViewProps> = ({ onSignUp, onNavigateToLogin }) 
                     </div>
 
                     <div className="flex bg-slate-100 p-1 rounded-lg">
-                        <button onClick={onNavigateToLogin} className="w-1/2 py-2 text-sm font-semibold text-slate-500 rounded-md">
+                        <button onClick={onSwitchToLogin} className="w-1/2 py-2 text-sm font-semibold text-slate-500 rounded-md">
                             Sign In
                         </button>
                          <button className="w-1/2 py-2 text-sm font-semibold text-emerald-600 bg-white rounded-md shadow-sm">

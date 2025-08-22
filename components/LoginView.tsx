@@ -3,11 +3,12 @@ import { motion } from 'framer-motion';
 
 interface LoginViewProps {
     onLogin: (email: string, password: string) => Promise<boolean>;
-    onForgotPassword: () => void;
-    onNavigateToSignUp: () => void;
+    onSwitchToForgotPassword: () => void;
+    onSwitchToSignUp: () => void;
+    showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
 }
 
-const LoginView: React.FC<LoginViewProps> = ({ onLogin, onForgotPassword, onNavigateToSignUp }) => {
+const LoginView: React.FC<LoginViewProps> = ({ onLogin, onSwitchToForgotPassword, onSwitchToSignUp, showToast }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
@@ -40,7 +41,7 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, onForgotPassword, onNavi
                         <button className="w-1/2 py-2 text-sm font-semibold text-emerald-600 bg-white rounded-md shadow-sm">
                             Sign In
                         </button>
-                        <button onClick={onNavigateToSignUp} className="w-1/2 py-2 text-sm font-semibold text-slate-500 rounded-md">
+                        <button onClick={onSwitchToSignUp} className="w-1/2 py-2 text-sm font-semibold text-slate-500 rounded-md">
                             Sign Up
                         </button>
                     </div>
@@ -99,7 +100,7 @@ const LoginView: React.FC<LoginViewProps> = ({ onLogin, onForgotPassword, onNavi
                         <div className="text-center text-sm">
                             <button
                                 type="button"
-                                onClick={onForgotPassword}
+                                onClick={onSwitchToForgotPassword}
                                 className="font-medium text-emerald-600 hover:text-emerald-500"
                             >
                                 Forgot your password?
