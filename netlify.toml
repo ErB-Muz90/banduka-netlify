@@ -1,9 +1,9 @@
 [build]
-  publish = "dist"
-  command = "npm run build"
+  publish = "."
+  command = "echo 'Static site - no build needed'"
 
 [build.environment]
-  NODE_VERSION = "18"
+  NODE_VERSION = "18.20.4"
 
 [[redirects]]
   from = "/*"

@@ -117,7 +117,7 @@ const NewWorkOrderView: React.FC<NewWorkOrderViewProps> = ({ customers, users, s
                 <div className="pt-4">
                     <button type="submit" className="w-full bg-primary text-white font-bold py-3 rounded-lg text-lg hover:bg-accent">Create Work Order</button>
                 </div>
-            </form>
+            </motion.form>
         </div>
     );
 };

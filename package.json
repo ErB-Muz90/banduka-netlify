@@ -4,15 +4,19 @@
   "private": true,
   "description": "A responsive, offline-capable, web-based Point of Sale (POS) system.",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview",
-    "start": "vite",
+    "dev": "python3 -m http.server 3000",
+    "build": "mkdir -p dist && cp -r . dist/ && rm -rf dist/node_modules dist/.git dist/dist",
+    "preview": "cd dist && python3 -m http.server 3000",
+    "start": "python3 -m http.server 3000",
     "lint": "echo \"ESLint not configured for static project.\""
   },
   "dependencies": {
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
+  },
+  "engines": {
+    "node": ">=18.20.4",
+    "npm": ">=10.0.0"
   },
   "devDependencies": {
     "vite": "^5.0.0",
