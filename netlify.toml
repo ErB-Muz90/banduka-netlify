@@ -1,5 +1,5 @@
 [build]
-  command = "mkdir -p dist && cp *.html *.tsx *.ts *.json *.css *.js dist/ 2>/dev/null || true && cp -r components hooks utils public dist/ 2>/dev/null || true"
+  command = "npm run build"
   publish = "dist"
 
 [[redirects]]

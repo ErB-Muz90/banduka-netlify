@@ -2,7 +2,7 @@ import React, { useState, useMemo, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Product, Permission, Settings } from '../types';
 import ProductModal from './inventory/ProductModal';
-import { ICONS } from '../../constants';
+import { ICONS } from '../constants';
 
 interface InventoryViewProps {
     products: Product[];

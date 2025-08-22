@@ -36,12 +36,12 @@ const UsersPermissionsSettings: React.FC<UsersPermissionsSettingsProps> = ({ set
                         </tr>
                     </thead>
                     <tbody>
-                        {PERMISSIONS_CONFIG.map(({ module, permissions }) => (
+                        {PERMISSIONS_CONFIG.map(({ module, permissions }: { module: string, permissions: { id: Permission, label: string }[] }) => (
                             <React.Fragment key={module}>
                                 <tr className="bg-slate-50 dark:bg-slate-700/50">
                                     <td colSpan={1 + Object.keys(settings.permissions).length} className="px-6 py-2 font-bold text-slate-600 dark:text-slate-300">{module}</td>
                                 </tr>
-                                {permissions.map(p => (
+                                {permissions.map((p: { id: Permission, label: string }) => (
                                     <tr key={p.id} className="bg-white dark:bg-slate-800 border-b dark:border-slate-700 last:border-b-0 hover:bg-slate-50 dark:hover:bg-slate-700/50">
                                         <td className="px-6 py-4 font-medium text-slate-600 dark:text-slate-300">{p.label}</td>
                                         {(Object.keys(settings.permissions) as Role[]).map(role => (

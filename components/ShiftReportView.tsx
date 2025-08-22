@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sale, User, Shift, Settings, Payout } from '../types';
 import ZReportView from './pos/ZReportView';
-import { DEFAULT_SETTINGS } from '../../constants'; // Import default settings
+import { DEFAULT_SETTINGS } from '../constants'; // Import default settings
 
 interface ShiftReportViewProps {
   shifts: Shift[];
